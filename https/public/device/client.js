@@ -10,9 +10,9 @@ if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
     throw new Error("enumerateDevice is not support!");
 } else {
     getRtc();
-    navigator.mediaDevices.enumerateDevices().then(gotDevices).catch(handleError);
+    navigator.mediaDevices.enumerateDevices().then(getDevices).catch(handleError);
 }
-function gotDevices(deviceInfos) {
+function getDevices(deviceInfos) {
     // 遍历数组
     deviceInfos.forEach(deviceInfo => {
         console.log(`kind: ${deviceInfo.kind};label: ${deviceInfo.label};
