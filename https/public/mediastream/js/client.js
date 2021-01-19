@@ -56,9 +56,13 @@ function start() {
                 width: 640,
                 height: 480,
                 frameRate: 15 /* 帧率 */,
-                deviceId: deviceId ? { exact: deviceId } : undefined,
+                facingMode: "environment",
             },
-            audio: true,
+            audio: {
+                noiseSuppression: true,
+                echoCancellation: true,
+            },
+            deviceId: deviceId ? { exact: deviceId } : undefined,
         };
 
         navigator.mediaDevices
@@ -70,3 +74,5 @@ function start() {
 }
 
 start();
+
+videoSource.onchange = start;
