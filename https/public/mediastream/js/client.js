@@ -5,7 +5,6 @@ let audioSource = document.querySelector("select#audioSource");
 let audioOutput = document.querySelector("select#audioOutput");
 let videoSource = document.querySelector("select#videoSource");
 
-
 let videoplay = document.querySelector("video#player");
 
 //div
@@ -28,10 +27,12 @@ function getDevices(deviceInfos) {
 }
 
 function gotMediaStream(stream) {
+    // 拿到所有video 轨，取第一个
     let videoTrack = stream.getVideoTracks()[0];
+    // 返回video的所有约束
     let videoConstraints = videoTrack.getSettings();
-
-    divConstraints.textContent = JSON.stringify(videoConstraints, null, 2);
+    // 转为JSON格式，添加到dom中
+    divConstraints.textContent = JSON.stringify(videoConstraints, null, 2 /* 缩进空格 */);
 
     window.stream = stream;
     videoplay.srcObject = stream;
@@ -49,8 +50,14 @@ function start() {
         console.log("getUserMedia is not supported!");
         return;
     } else {
+        let deviceId = videoSource.value;
         let constraints = {
-            video: true,
+            video: {
+                width: 640,
+                height: 480,
+                frameRate: 15 /* 帧率 */,
+                deviceId: deviceId ? { exact: deviceId } : undefined,
+            },
             audio: true,
         };
 
