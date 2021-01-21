@@ -4,6 +4,7 @@
 let audioSource = document.querySelector("select#audioSource");
 let audioOutput = document.querySelector("select#audioOutput");
 let videoSource = document.querySelector("select#videoSource");
+let filtersSelect = document.querySelector("select#filter");
 
 let videoplay = document.querySelector("video#player");
 
@@ -76,3 +77,7 @@ function start() {
 start();
 
 videoSource.onchange = start;
+
+filtersSelect.onchange = function () {
+    videoplay.className = filtersSelect.value;
+};

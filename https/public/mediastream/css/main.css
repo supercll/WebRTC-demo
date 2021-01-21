@@ -115,3 +115,24 @@ video {
         height: 96px;
     }
 }
+
+
+.none {
+    -webkit-filter: none;	
+}
+
+.blur {
+    -webkit-filter: blur(3px);	
+}
+
+.grayscale {
+    -webkit-filter: grayscale(1); 	
+}
+
+.invert {
+    -webkit-filter: invert(1);	
+}
+
+.sepia {
+    -webkit-filter: sepia(1);
+}
