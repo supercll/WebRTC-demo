@@ -37,8 +37,16 @@ function getDevices(deviceInfos) {
 }
 
 function gotMediaStream(stream) {
-    // videoplay.srcObject = stream;
-    audioplay.srcObject = stream;
+    // 拿到所有video 轨，取第一个
+    let videoTrack = stream.getVideoTracks()[0];
+    // 返回video的所有约束
+    let videoConstraints = videoTrack.getSettings();
+    // 转为JSON格式，添加到dom中
+    divConstraints.textContent = JSON.stringify(videoConstraints, null, 2 /* 缩进空格 */);
+
+    window.stream = stream;
+    videoplay.srcObject = stream;
+    // audioplay.srcObject = stream;
 
     return navigator.mediaDevices.enumerateDevices();
 }
@@ -96,8 +104,8 @@ function startOnlyAudio() {
     }
 }
 
-// start();
-startOnlyAudio();
+start();
+// startOnlyAudio();
 
 videoSource.onchange = start;
 
