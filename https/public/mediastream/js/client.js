@@ -4,7 +4,15 @@
 let audioSource = document.querySelector("select#audioSource");
 let audioOutput = document.querySelector("select#audioOutput");
 let videoSource = document.querySelector("select#videoSource");
+
+// filter
 let filtersSelect = document.querySelector("select#filter");
+
+// snapshot
+let snapshot = document.querySelector("#snapshot");
+let pic = document.querySelector("#picture");
+pic.width = 640;
+pic.height = 480;
 
 let videoplay = document.querySelector("video#player");
 
@@ -80,4 +88,9 @@ videoSource.onchange = start;
 
 filtersSelect.onchange = function () {
     videoplay.className = filtersSelect.value;
+};
+
+snapshot.onclick = function () {
+    pic.className = filtersSelect.value;
+    pic.getContext("2d").drawImage(videoplay, 0, 0, pic.width, pic.height);
 };
