@@ -15,6 +15,7 @@ pic.width = 640;
 pic.height = 480;
 
 let videoplay = document.querySelector("video#player");
+let audioplay = document.querySelector("#audioplayer");
 
 //div
 let divConstraints = document.querySelector("div#constraints");
@@ -36,17 +37,9 @@ function getDevices(deviceInfos) {
 }
 
 function gotMediaStream(stream) {
-    // 拿到所有video 轨，取第一个
-    let videoTrack = stream.getVideoTracks()[0];
-    // 返回video的所有约束
-    let videoConstraints = videoTrack.getSettings();
-    // 转为JSON格式，添加到dom中
-    divConstraints.textContent = JSON.stringify(videoConstraints, null, 2 /* 缩进空格 */);
+    // videoplay.srcObject = stream;
+    audioplay.srcObject = stream;
 
-    window.stream = stream;
-    videoplay.srcObject = stream;
-
-    //audioplay.srcObject = stream;
     return navigator.mediaDevices.enumerateDevices();
 }
 
@@ -82,7 +75,29 @@ function start() {
     }
 }
 
-start();
+function startOnlyAudio() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.log("getUserMedia is not supported!");
+        return;
+    } else {
+        let constraints = {
+            video: false,
+            audio: {
+                noiseSuppression: true,
+                echoCancellation: true,
+            },
+        };
+
+        navigator.mediaDevices
+            .getUserMedia(constraints)
+            .then(gotMediaStream)
+            .then(getDevices)
+            .catch(handleError);
+    }
+}
+
+// start();
+startOnlyAudio();
 
 videoSource.onchange = start;
 
