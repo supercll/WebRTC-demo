@@ -9,18 +9,35 @@ let videoSource = document.querySelector("select#videoSource");
 let filtersSelect = document.querySelector("select#filter");
 
 // snapshot
-let snapshot = document.querySelector("#snapshot");
-let pic = document.querySelector("#picture");
-pic.width = 640;
-pic.height = 480;
+let snapshot = document.querySelector("button#snapshot");
+let picture = document.querySelector("canvas#picture");
+picture.width = 640;
+picture.height = 480;
 
 let videoplay = document.querySelector("video#player");
-let audioplay = document.querySelector("#audioplayer");
+//let audioplay = document.querySelector('audio#audioplayer');
 
 //div
 let divConstraints = document.querySelector("div#constraints");
 
-function getDevices(deviceInfos) {
+//record
+let recvideo = document.querySelector("video#recplayer");
+let btnRecord = document.querySelector("button#record");
+let btnPlay = document.querySelector("button#recplay");
+let btnDownload = document.querySelector("button#download");
+
+let buffer;
+let mediaRecorder;
+
+//socket.io
+let btnConnect = document.querySelector("button#connect");
+let btnLeave = document.querySelector("button#leave");
+let inputRoom = document.querySelector("input#room");
+
+let socket;
+let room;
+
+function gotDevices(deviceInfos) {
     deviceInfos.forEach(function (deviceinfo) {
         let option = document.createElement("option");
         option.text = deviceinfo.label;
@@ -42,12 +59,12 @@ function gotMediaStream(stream) {
     // 返回video的所有约束
     let videoConstraints = videoTrack.getSettings();
     // 转为JSON格式，添加到dom中
-    divConstraints.textContent = JSON.stringify(videoConstraints, null, 2 /* 缩进空格 */);
+
+    divConstraints.textContent = JSON.stringify(videoConstraints, null, 2);
 
     window.stream = stream;
     videoplay.srcObject = stream;
-    // audioplay.srcObject = stream;
-
+    //audioplay.srcObject = stream;
     return navigator.mediaDevices.enumerateDevices();
 }
 
@@ -66,40 +83,16 @@ function start() {
                 width: 640,
                 height: 480,
                 frameRate: 15 /* 帧率 */,
-                facingMode: "environment",
+                facingMode: "enviroment",
+                deviceId: deviceId ? { exact: deviceId } : undefined,
             },
-            audio: {
-                noiseSuppression: true,
-                echoCancellation: true,
-            },
-            deviceId: deviceId ? { exact: deviceId } : undefined,
+            audio: false,
         };
 
         navigator.mediaDevices
             .getUserMedia(constraints)
             .then(gotMediaStream)
-            .then(getDevices)
-            .catch(handleError);
-    }
-}
-
-function startOnlyAudio() {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        console.log("getUserMedia is not supported!");
-        return;
-    } else {
-        let constraints = {
-            video: false,
-            audio: {
-                noiseSuppression: true,
-                echoCancellation: true,
-            },
-        };
-
-        navigator.mediaDevices
-            .getUserMedia(constraints)
-            .then(gotMediaStream)
-            .then(getDevices)
+            .then(gotDevices)
             .catch(handleError);
     }
 }
@@ -114,6 +107,109 @@ filtersSelect.onchange = function () {
 };
 
 snapshot.onclick = function () {
-    pic.className = filtersSelect.value;
-    pic.getContext("2d").drawImage(videoplay, 0, 0, pic.width, pic.height);
+    picture.className = filtersSelect.value;
+    picture.getContext("2d").drawImage(videoplay, 0, 0, picture.width, picture.height);
+};
+
+// recorder
+
+function handleDataAvailable(e) {
+    if (e && e.data && e.data.size > 0) {
+        buffer.push(e.data);
+    }
+}
+
+function startRecord() {
+    buffer = [];
+
+    let options = {
+        mimeType: "video/webm;codecs=vp8",
+    };
+
+    if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        console.error(`${options.mimeType} is not supported!`);
+        return;
+    }
+
+    try {
+        mediaRecorder = new MediaRecorder(window.stream, options);
+    } catch (e) {
+        console.error("Failed to create MediaRecorder:", e);
+        return;
+    }
+
+    mediaRecorder.ondataavailable = handleDataAvailable;
+    mediaRecorder.start(10);
+}
+
+function stopRecord() {
+    mediaRecorder.stop();
+}
+
+btnRecord.onclick = () => {
+    if (btnRecord.textContent === "Start Record") {
+        startRecord();
+        btnRecord.textContent = "Stop Record";
+        btnPlay.disabled = true;
+        btnDownload.disabled = true;
+    } else {
+        stopRecord();
+        btnRecord.textContent = "Start Record";
+        btnPlay.disabled = false;
+        btnDownload.disabled = false;
+    }
+};
+
+btnPlay.onclick = () => {
+    let blob = new Blob(buffer, { type: "video/webm" });
+    recvideo.src = window.URL.createObjectURL(blob);
+    recvideo.srcObject = null;
+    recvideo.controls = true;
+    recvideo.play();
+};
+
+btnDownload.onclick = () => {
+    let blob = new Blob(buffer, { type: "video/webm" });
+    let url = window.URL.createObjectURL(blob);
+    let a = document.createElement("a");
+
+    a.href = url;
+    a.style.display = "none";
+    a.download = "aaa.webm";
+    a.click();
+};
+
+function connectServer() {
+    socket = io.connect();
+
+    btnLeave.disabled = false;
+    btnConnect.disabled = true;
+
+    ///////
+    socket.on("joined", function (room, id) {
+        console.log("The User(" + id + ") have joined into " + room);
+    });
+
+    socket.on("leaved", function (room, id) {
+        console.log("The User(" + id + ") have leaved from " + room);
+    });
+
+    //join room
+    room = inputRoom.value;
+    if (room !== "") {
+        socket.emit("join", room);
+    }
+}
+
+btnConnect.onclick = () => {
+    connectServer();
+};
+
+btnLeave.onclick = () => {
+    if (room !== "") {
+        socket.emit("leave", room);
+        btnLeave.disabled = true;
+        btnConnect.disabled = false;
+        socket.disconnect();
+    }
 };
