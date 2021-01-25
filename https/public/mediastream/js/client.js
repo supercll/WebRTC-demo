@@ -96,9 +96,27 @@ function start() {
             .catch(handleError);
     }
 }
+function startDesktop() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.log("getUserMedia is not supported!");
+        return;
+    } else {
+        let constraints = {
+            video: true,
+            audio: false,
+        };
 
-start();
+        navigator.mediaDevices
+            .getDisplayMedia(constraints)
+            .then(gotMediaStream)
+            .then(gotDevices)
+            .catch(handleError);
+    }
+}
+
+// start();
 // startOnlyAudio();
+startDesktop();
 
 videoSource.onchange = start;
 
